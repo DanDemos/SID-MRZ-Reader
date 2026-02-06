@@ -58,6 +58,13 @@ tr:hover {
   /* background-color: #e6f7ff; */
 }
 
+button{
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding: 18px;
+}
 
 @keyframes App-logo-spin {
   from {

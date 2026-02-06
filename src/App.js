@@ -9,10 +9,11 @@ let mrz = [
   '',
 ];
 
-
 // 'I<UTOD23145890<1233<<<<<<<<<<<',
 // '7408122F1204159UTO<<<<<<<<<<<6',
 // 'ERIKSSON<<ANNA<MARIA<<<<<<<<<<',
+
+let documentNo
 
 function App() {
   const [message, setMessage] = useState("");
@@ -20,6 +21,7 @@ function App() {
   const [mrzOne, setmrzOne] = useState("");
   const [mrzTwo, setmrzTwo] = useState("");
   const [mrzThree, setmrzThree] = useState("");
+  const [err, seterr] = useState("");
 
   const inputRef = useRef(null);
 
@@ -42,15 +44,41 @@ function App() {
   };
 
   const formatDate = (dateString, type = "birthday") => {
-    const yearPrefix = parseInt(dateString.substring(0, 2), 10);
-    const threshold = 50;
-    const year = yearPrefix < threshold ? 2000 + yearPrefix : 1900 + yearPrefix;
-    const month = parseInt(dateString.substring(2, 4), 10) - 1; // Months are zero-based
-    const day = parseInt(dateString.substring(4), 10);
-    const dateObject = new Date(year, month, day);
-    const formattedDateString = dateObject.toLocaleDateString('en-GB');
-    // console.log(formattedDate);
-    return formattedDateString
+    if (dateString) {
+      const yearPrefix = parseInt(dateString.substring(0, 2), 10);
+      const threshold = 50;
+      const year = yearPrefix < threshold ? 2000 + yearPrefix : 1900 + yearPrefix;
+      const month = parseInt(dateString.substring(2, 4), 10) - 1; // Months are zero-based
+      const day = parseInt(dateString.substring(4), 10);
+      const dateObject = new Date(year, month, day);
+      const formattedDateString = dateObject.toLocaleDateString('en-GB');
+      // console.log(formattedDate);
+      return formattedDateString
+    }
+    else { return "No Data"; }
+  }
+
+  const sendApi = async () => {
+    const response = await fetch(`http://sidbooking.com/wp-json/api/taken_card/?document=${documentNo}`);
+    const res = await response.json();
+    console.log(res)
+    try {
+      if (res == 1) {
+        setarr([])
+      }
+      else if (res == 0) {
+        seterr("Already Exists!!!")
+        throw new Error("Already Exists (Server response is 0)")
+      }
+      else {
+        seterr("Unknown error!!!")
+        throw new Error("Unknown error (Server response is not 0 or 1)")
+
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
   }
 
   return (
@@ -75,6 +103,7 @@ function App() {
             var result = parse(mrz);
             let temp = []
             // { label: "Document code", field: "documentCode", value: "IS", … }
+            documentNo = result?.details?.find(item => item.field === 'documentNumber')?.value
 
             temp.push(
               {
@@ -121,7 +150,7 @@ function App() {
                           {value.label}
                         </td>
                         <td>
-                          {value.value}
+                          {value?.value ? value?.value : "No Data"}
                         </td>
                       </tr>
                     )
@@ -172,6 +201,49 @@ function App() {
         }
       </div>
 
+      <div style={{ display: "flex", justifyContent: "center" }}>
+
+        <table style={{ width: "auto" }}>
+          <tbody>
+            <tr style={{ visibility: 'collapse' }}>
+              <td>
+              </td>
+              <td>
+              </td>
+            </tr>
+            <tr style={{ visibility: 'collapse' }}>
+              <td>
+              </td>
+              <td>
+              </td>
+            </tr>
+            <tr>
+
+              <td colSpan="2">
+                <button onClick={() => sendApi()}>
+                  Withdraw
+                </button>
+              </td>
+
+            </tr>
+            {
+              err
+              &&
+              <tr>
+                <td colSpan="2" style={{color: "red", textAlign: "center"}}>
+                  {err}
+                </td>
+              </tr>
+            }
+
+
+          </tbody>
+        </table>
+
+      </div>
+
+
+
       <div>
         {mrzOne}
       </div>
@@ -181,6 +253,8 @@ function App() {
       <div>
         {mrzThree}
       </div>
+
+
     </div>
   );
 }
